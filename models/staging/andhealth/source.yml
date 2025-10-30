@@ -1,0 +1,98 @@
+version: 2
+
+sources:
+  - name: source
+    tables:
+      - name: appointments
+        columns:
+          - name: appointment_id
+            data_type: varchar
+          - name: patient_id
+            data_type: varchar
+          - name: scheduled_at
+            data_type: timestamp_ntz
+          - name: status
+            data_type: varchar
+          - name: clinic_location
+            data_type: varchar
+          - name: provider_id
+            data_type: varchar
+
+      - name: patients
+        columns:
+          - name: patient_id
+            data_type: varchar
+          - name: age_group
+            data_type: varchar
+          - name: payer_type
+            data_type: varchar
+          - name: gender
+            data_type: varchar
+          - name: city
+            data_type: varchar
+          - name: state
+            data_type: varchar
+
+      - name: visits
+        columns:
+          - name: visit_id
+            data_type: varchar
+          - name: appointment_id
+            data_type: varchar
+          - name: patient_id
+            data_type: varchar
+          - name: visit_date
+            data_type: date
+          - name: provider_id
+            data_type: varchar
+          - name: billed_amount
+            data_type: number
+          - name: clinic_location
+            data_type: varchar
+          - name: is_first_visit_for_patient
+            data_type: boolean
+          - name: visit_duration_minutes
+            data_type: number
+          - name: modality
+            data_type: varchar
+
+      - name: date_dim
+        columns:
+          - name: date
+            data_type: date
+          - name: month
+            data_type: varchar
+          - name: quarter
+            data_type: varchar
+          - name: year
+            data_type: number
+
+      - name: providers
+        columns:
+          - name: provider_id
+            data_type: varchar
+          - name: provider_name
+            data_type: varchar
+          - name: provider_type
+            data_type: varchar
+          - name: home_clinic
+            data_type: varchar
+
+      - name: survey
+        columns:
+          - name: visit_id
+            data_type: varchar
+          - name: satisfaction_score
+            data_type: number
+          - name: comment_text
+            data_type: varchar
+
+      - name: visit_providers
+        columns:
+          - name: visit_id
+            data_type: varchar
+          - name: provider_id
+            data_type: varchar
+          - name: role_in_visit
+            data_type: varchar
+

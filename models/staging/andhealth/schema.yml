@@ -1,0 +1,219 @@
+version: 2
+
+models:
+  - name: stg_patients
+    description: Patient demographic information
+    columns:
+      - name: patient_id
+        description: Unique identifier for the patient
+        tests:
+          - unique
+          - not_null
+      - name: age_group
+        description: Age group classification
+      - name: payer_type
+        description: Insurance payer type
+      - name: gender
+        description: Patient gender
+      - name: city
+        description: Patient city
+      - name: state
+        description: Patient state
+
+  - name: stg_providers
+    description: Healthcare provider information
+    columns:
+      - name: provider_id
+        description: Unique identifier for the provider
+        tests:
+          - unique
+          - not_null
+      - name: provider_name
+        description: Full name of the provider
+        tests:
+          - not_null
+      - name: provider_type
+        description: Provider specialty/type
+      - name: home_clinic
+        description: Provider's home clinic location
+        tests:
+          - not_null
+
+  - name: stg_appointments
+    description: Patient appointment records
+    columns:
+      - name: appointment_id
+        description: Unique identifier for the appointment
+        tests:
+          - unique
+          - not_null
+      - name: patient_id
+        description: Foreign key to patients table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_patients')
+              field: patient_id
+      - name: scheduled_at
+        description: Appointment scheduled date and time
+        tests:
+          - not_null
+      - name: status
+        description: Appointment status
+      - name: clinic_location
+        description: Clinic location for appointment
+        tests:
+          - not_null
+          - accepted_values:
+              values: 
+                - 'Northside Clinic'
+                - 'Downtown Clinic'
+                - 'Uptown Clinic'
+                - 'Riverside Clinic'
+                - 'East Clinic'
+                - 'South Clinic'
+                - 'East Health Center'
+                - 'Telehealth Hub'
+      - name: provider_id
+        description: Foreign key to providers table
+        tests:
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+
+  - name: stg_visits
+    description: Patient visit records
+    columns:
+      - name: visit_id
+        description: Unique identifier for the visit
+        tests:
+          - unique
+          - not_null
+      - name: appointment_id
+        description: Foreign key to appointments table
+        tests:
+          - relationships:
+              to: ref('stg_appointments')
+              field: appointment_id
+      - name: patient_id
+        description: Foreign key to patients table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_patients')
+              field: patient_id
+      - name: visit_date
+        description: Date of the visit
+        tests:
+          - not_null
+      - name: provider_id
+        description: Foreign key to providers table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: billed_amount
+        description: Amount billed for the visit
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: clinic_location
+        description: Clinic location for visit
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - 'Northside Clinic'
+                - 'Downtown Clinic'
+                - 'Uptown Clinic'
+                - 'Riverside Clinic'
+                - 'East Clinic'
+                - 'South Clinic'
+                - 'East Health Center'
+                - 'Telehealth Hub'
+      - name: is_first_visit_for_patient
+        description: Boolean flag indicating if this is patient's first visit
+        tests:
+          - not_null
+      - name: visit_duration_minutes
+        description: Duration of visit in minutes
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: modality
+        description: Visit modality (in-person, telehealth, etc.)
+
+  - name: stg_visit_providers
+    description: Many-to-many relationship between visits and providers
+    columns:
+      - name: visit_id
+        description: Foreign key to visits table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_visits')
+              field: visit_id
+      - name: provider_id
+        description: Foreign key to providers table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: role_in_visit
+        description: Provider's role in the visit
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - visit_id
+            - provider_id
+
+  - name: stg_survey
+    description: Patient survey responses
+    columns:
+      - name: visit_id
+        description: Foreign key to visits table
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('stg_visits')
+              field: visit_id
+      - name: satisfaction_score
+        description: Patient satisfaction score
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 5
+              inclusive: true
+      - name: comment_text
+        description: Additional survey comments
+
+  - name: stg_date_dim
+    description: Date dimension table for analytics
+    columns:
+      - name: date
+        description: Date value
+        tests:
+          - unique
+          - not_null
+      - name: month
+        description: Month name
+        tests:
+          - not_null
+      - name: quarter
+        description: Calendar quarter
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Q1', 'Q2', 'Q3', 'Q4']
+      - name: year
+        description: Calendar year
+        tests:
+          - not_null
+
