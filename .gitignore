@@ -10,6 +10,7 @@ dbt_modules/
 
 # Operating system generated files
 .DS_Store
+.venv
 
 # User-specific configuration (if any)
 profiles.yml
