@@ -1,6 +1,6 @@
 select
     {{ clean_clinic_name('clinic_location') }} as clinic_name,
-    cast(scheduled_at as date) as appt_date,
+    scheduled_at,
     count(*) as total_appointments,
     sum(case when upper(status)='CANCELLED' then 1 else 0 end) as cancelled,
     sum(case when upper(status)='RESCHEDULED' then 1 else 0 end) as rescheduled,
@@ -8,4 +8,4 @@ select
     sum(case when upper(status)='COMPLETED' then 1 else 0 end) as completed
 from {{ ref('stg_appointments') }}
 where clinic_location is not null
-group by 1,2;
+group by 1,2

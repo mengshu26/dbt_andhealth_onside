@@ -29,6 +29,6 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   staging:
-    # Config indicated by + and applies to all files under models/example/
-    andhealth:
-      +schema: _staging
+    +schema: _staging
+  intermediate:
+    +schema: _staging
