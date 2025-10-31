@@ -5,10 +5,35 @@ working assumptions:
 i originally assumed that visits would have all of the locations. but i changed that assumption to that providers would have all the clinic locations 
 
 steps: 
-built staging models and tests on primary keys, accepted values, relationships. discovered the following quirks about the data in addition to the ones listed - 
-in providers - missing provider_ids 24-30
-in patients - P0124 was loaded twice, resolved with select distinct in staging layer
+built staging models and tests on primary keys, accepted values, relationships. discovered the following about the data in addition to the ones listed - 
+Data quality issues discovered or previous noted in the project. normalized: 
+- clinic name inconsistencies clean up using macro 
+- P0124 was loaded twice in patients, resolved with select distinct in staging layer
 
+Data quality issues / questions, not handled:
+- in providers - missing provider_ids 24-30
+- 161 completed appointments does not have associated visits, need to understand why and think about what metrics we care about surrounding appointments
+- 2 clinics aren't being utilized at all or no data from them?
+
+Definitions
+- rescheduled appointments is a very interesting data point, and can potentially provide a lot of value if we had more data collected. if an appointment was cancelled or rescheduled, when was it rescheduled/cancelled relative to the appointment time? were we later able to fill that same appointment time? this could contribute to poorer clinic utilization. Could recommend a cancellation fee if within a period of time, or recommend reminder messages. For now, i'd keep rescheduled as its own definition until more data point can be gathered to break appointments out into different models serving metrics that could help increase appointment completion rate. 
+
+goals - 
+- get people into see doctors regularly. once a quarter could be gold standard. 
+- clinics and doctors are well utilized to be able to serve 5 doctors a day 
+
+Some examples of more data that could be gathered: 
+- capacity for each clinic - how many visits can a clinic fit in a day, how many primary providers can work there 
+- appointments data points - are appointments rescheduled/cancelled through phone or web? record the time of every appointment event, reason. can understand how to improve appointment completion rate and utilization rate 
+
+
+
+How are we performing across clinics?? what's the utilization? why aren't people showing up? are people revisiting? do different types of payers have more or less visits/no shows? what's the general survey satisfaction score for each clinic? 
+
+
+
+if i had more time:
+have a more sophisticated understanding of appointments/visits and how they affect topline clinic performance
 
 Andhealth onsite 
 
