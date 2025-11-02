@@ -8,9 +8,9 @@ with source as (
 renamed as (
 
     select
-        provider_id,
-        provider_name,
-        provider_type,
+        cast(provider_id as varchar) as provider_id,
+        cast(provider_name as varchar) as provider_name,
+        cast(provider_type as varchar) as provider_type,
         {{ clean_clinic_name('home_clinic') }} as home_clinic
 
     from source

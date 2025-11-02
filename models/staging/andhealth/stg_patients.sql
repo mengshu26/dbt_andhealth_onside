@@ -8,12 +8,12 @@ with source as (
 renamed as (
 
     select
-        patient_id,
-        age_group,
-        payer_type,
-        gender,
-        city,
-        state
+        cast(patient_id as varchar) as patient_id,
+        cast(age_group as varchar) as age_group,
+        cast(payer_type as varchar) as payer_type,
+        cast(gender as varchar) as gender,
+        cast(city as varchar) as city,
+        cast(state as varchar) as state
 
     from source
 

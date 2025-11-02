@@ -30,7 +30,12 @@ survey_q as (
     d.quarter,
     round(sum(s.survey_score_sum) / nullif(sum(s.survey_count), 0), 2) as avg_survey_score,
     sum(s.survey_count) as survey_count,
-    sum(s.survey_score_sum) as survey_score_sum
+    sum(s.survey_score_sum) as survey_score_sum,
+    sum(s.survey_score_1_count) as survey_score_1_count,
+    sum(s.survey_score_2_count) as survey_score_2_count,
+    sum(s.survey_score_3_count) as survey_score_3_count,
+    sum(s.survey_score_4_count) as survey_score_4_count,
+    sum(s.survey_score_5_count) as survey_score_5_count
   from {{ ref('int_clinic_survey_daily') }} s
   join {{ ref('stg_date_dim') }} d on s.visit_date = d.date
   group by 1,2,3
@@ -48,7 +53,12 @@ select
   coalesce(a.completed, 0) as completed,
   coalesce(s.avg_survey_score, 0) as avg_survey_score,
   coalesce(s.survey_count, 0) as survey_count,
-  coalesce(s.survey_score_sum, 0) as survey_score_sum
+  coalesce(s.survey_score_sum, 0) as survey_score_sum,
+  coalesce(s.survey_score_1_count, 0) as survey_score_1_count,
+  coalesce(s.survey_score_2_count, 0) as survey_score_2_count,
+  coalesce(s.survey_score_3_count, 0) as survey_score_3_count,
+  coalesce(s.survey_score_4_count, 0) as survey_score_4_count,
+  coalesce(s.survey_score_5_count, 0) as survey_score_5_count
 from visits_q v
 full outer join appointments_q a
   on v.clinic_name = a.clinic_name

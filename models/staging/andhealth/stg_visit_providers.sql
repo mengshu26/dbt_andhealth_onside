@@ -8,9 +8,9 @@ with source as (
 renamed as (
 
     select
-        visit_id,
-        provider_id,
-        role_in_visit
+        cast(visit_id as varchar) as visit_id,
+        cast(provider_id as varchar) as provider_id,
+        cast(role_in_visit as varchar) as role_in_visit
 
     from source
 

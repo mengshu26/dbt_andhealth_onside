@@ -8,9 +8,9 @@ with source as (
 renamed as (
 
     select
-        visit_id,
-        satisfaction_score,
-        comment_text
+        cast(visit_id as varchar) as visit_id,
+        try_to_number(satisfaction_score) as satisfaction_score,
+        cast(comment_text as varchar) as comment_text
 
     from source
 

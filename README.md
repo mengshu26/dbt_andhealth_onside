@@ -1,5 +1,67 @@
-quirks about the dataset:
+# AndHealth Onsite — Analytics Engineer Project
 
+## My Approach and Key Modeling Decisions
+- Built clean, well-tested **staging models** for each source table:  
+  `appointments`, `visits`, `providers`, `patients`, `visit_providers`, `survey`, and `date_dim`.  
+- Added **data tests** for primary keys, relationships, and accepted values to establish a trusted foundation.  
+- Created a **macro to normalize clinic names** (e.g., “Downtown Clinic” vs “downtown”) for consistent reporting.  
+- Used `select distinct` to **deduplicate patients** (`P0124` appeared twice).  
+- Joined `visits`, `appointments`, and `providers` to define key metrics such as:  
+  - Appointment completion, cancellation, and reschedule rates  
+  - Average visit duration and quarterly clinic volume  
+  - Early prototype of provider utilization (used minutes ÷ available minutes)
+- Designed the dbt project with a **layered structure**:  
+  - *Staging* → cleaned raw data  
+  - *Intermediate* → business logic and joins  
+  - *Marts* → aggregated, stakeholder-ready metrics  
+- Kept transformations **modular and documented** to support scalability and ease of maintenance.
+
+---
+
+## The Semantic Layer
+- The **semantic layer** defines and governs shared business metrics — ensuring consistent definitions across dashboards, teams, and future NLQ/LLM tools.  
+- It serves as the **bridge between engineering precision and business clarity**.  
+- In this project, it means defining reusable entities (`clinic`, `provider`, `patient`) and metrics such as:  
+  - `appointment_completion_rate`  
+  - `clinic_utilization`  
+  - `avg_visit_duration`  
+- Ongoing maintenance includes:  
+  - Version-controlling and documenting metric logic in dbt  
+  - Adding tests to catch upstream data or logic breaks  
+  - Partnering with product and clinical ops teams to align on metric definitions  
+
+---
+
+## Data Quality Issues and Assumptions
+- **Clinic names** → normalized via macro for consistent aggregation  
+- **Duplicate patients** → resolved using `select distinct`  
+- **Missing provider IDs (24–30)** → left null; would investigate in source system  
+- **Appointments without visits (161)** → potential scheduling or EMR sync gap  
+- **Inactive clinics (2)** → may represent missing data or newly created sites  
+- **Reschedules** → treated as their own category; could later link to original appointment to assess scheduling efficiency  
+
+---
+
+## What I’d Do Next with More Time
+- **Operational modeling**  
+  - Refine provider utilization by incorporating clinic capacity or scheduling data  
+  - Build time-based and slot-based utilization metrics at the clinic level  
+- **Patient retention analytics**  
+  - Correlate survey satisfaction scores with appointment completion and attrition  
+  - Identify patient segments at risk of dropping out based on demographics or payer type  
+- **Metric governance**  
+  - Formalize the semantic layer using dbt metrics or a framework like Cube / MetricFlow  
+  - Document and expose consistent metric definitions for BI and LLM-driven exploration  
+- **Enablement**  
+  - Create Looker or Looker Studio dashboards showing:  
+    - Clinic performance over time  
+    - Provider utilization and appointment mix  
+    - Appointment funnel and completion trends  
+
+---
+
+
+this repo contains the dbt for this onsite assignment
 
 working assumptions: 
 i originally assumed that visits would have all of the locations. but i changed that assumption to that providers would have all the clinic locations 
@@ -28,12 +90,12 @@ Some examples of more data that could be gathered:
 
 
 
-How are we performing across clinics?? what's the utilization? why aren't people showing up? are people revisiting? do different types of payers have more or less visits/no shows? what's the general survey satisfaction score for each clinic? 
-
-
-
 if i had more time:
-have a more sophisticated understanding of appointments/visits and how they affect topline clinic performance
+- have a more sophisticated understanding of appointments/visits and how they affect topline clinic performance
+- patient attrition evaluation, how can we retain patients and have them come for check ups quarterly. do survey scores correlate with their visit rate/appointment completion rate, would a negative survey score (less than 3) affect their next likelihood of getting to their next appointment. do other attributes affect patient attrition - how they pay, age range, location, etc.. 
+- provider analysis. survey results by provider, evaluate performance. what could contribute to survey scores for providers? are certain specialties more in demand than others, do specialities have more or less cancelled/no show appointments?
+
+
 
 Andhealth onsite 
 
