@@ -1,100 +1,76 @@
 # AndHealth Onsite — Analytics Engineer Project
 
 ## My Approach and Key Modeling Decisions
-- Built clean, well-tested **staging models** for each source table:  
+- Loaded data into Snowflake, use DBT core for transformation in Snowflake, utilized the snowflake dashboarding function.
+- Built staging models for each source table:  
   `appointments`, `visits`, `providers`, `patients`, `visit_providers`, `survey`, and `date_dim`.  
-- Added **data tests** for primary keys, relationships, and accepted values to establish a trusted foundation.  
-- Created a **macro to normalize clinic names** (e.g., “Downtown Clinic” vs “downtown”) for consistent reporting.  
-- Used `select distinct` to **deduplicate patients** (`P0124` appeared twice).  
+- Added data tests for primary keys, relationships, and accepted values to catch issues with source data early on.  
+- Found several source data inconsistencies through data tests at the staging layer.
+- Created a macro to normalize clinic names.  
+- Used `select distinct` to deduplicate patients (`P0124` appeared twice found through data tests).  
 - Joined `visits`, `appointments`, and `providers` to define key metrics such as:  
-  - Appointment completion, cancellation, and reschedule rates  
+  - Appointment completion, cancellation, no show, and reschedule rates  
   - Average visit duration and quarterly clinic volume  
-  - Early prototype of provider utilization (used minutes ÷ available minutes)
-- Designed the dbt project with a **layered structure**:  
-  - *Staging* → cleaned raw data  
-  - *Intermediate* → business logic and joins  
-  - *Marts* → aggregated, stakeholder-ready metrics  
-- Kept transformations **modular and documented** to support scalability and ease of maintenance.
+- Designed the dbt project with a layered structure:  
+  - Staging - cleaned raw data  
+  - Intermediate - business logic and joins  
+  - Marts → aggregated, dashboard or stakeholder-ready tables and metrics  
 
----
 
-## The Semantic Layer
-- The **semantic layer** defines and governs shared business metrics — ensuring consistent definitions across dashboards, teams, and future NLQ/LLM tools.  
-- It serves as the **bridge between engineering precision and business clarity**.  
-- In this project, it means defining reusable entities (`clinic`, `provider`, `patient`) and metrics such as:  
-  - `appointment_completion_rate`  
-  - `clinic_utilization`  
-  - `avg_visit_duration`  
-- Ongoing maintenance includes:  
-  - Version-controlling and documenting metric logic in dbt  
-  - Adding tests to catch upstream data or logic breaks  
+
+## The semantic layer
+- The semantic layer defines and governs shared business metrics, ensuring consistent definitions across dashboards, teams, and future NLQ/LLM tools.  
+- It serves as the bridge between engineering and business.  
+- In this project, it means defining reusable entities (`clinic`, `provider`, `patient`) and metrics like average survey score to take average by `sum(survey_score)/sum(survey_count)` 
+- There are tools to help explicity define metrics - such dbt cloud semantic layer, atscale, lookml etc. but the act of producing tables with consistent definitions is also a way to produce a semantic layer.
+- Ongoing work for the semantic layer:
+  - Documenting metric logic in dbt or data catalog  
   - Partnering with product and clinical ops teams to align on metric definitions  
 
----
 
-## Data Quality Issues and Assumptions
-- **Clinic names** → normalized via macro for consistent aggregation  
-- **Duplicate patients** → resolved using `select distinct`  
-- **Missing provider IDs (24–30)** → left null; would investigate in source system  
-- **Appointments without visits (161)** → potential scheduling or EMR sync gap  
-- **Inactive clinics (2)** → may represent missing data or newly created sites  
-- **Reschedules** → treated as their own category; could later link to original appointment to assess scheduling efficiency  
 
----
+## Data quality issues and assumptions
+- Clinic names → normalized via macro for consistent aggregation  
+- Duplicate patients → resolved using `select distinct`  
+- Missing provider IDs (24–30) → left null; would investigate in source system  
+- Appointments without visits (count 161) → potential scheduling or EMR sync gap  
+- Inactive clinics (2) → may represent missing data or newly created sites  
+- Reschedules → treated as their own category; could later link to appointment system events to improve utilization rate
 
-## What I’d Do Next with More Time
-- **Operational modeling**  
+
+
+## What I’d do with more time + more data
+- Define Goals
+  - Work with business stakeholders and analysts to define goals: 
+  		- get people into see doctors regularly. once a quarter could be gold standard
+		- providers at 90% utilization rate 
+		- etc
+  - Then work with analysts to define key metrics and tables that can help evaluate performance and give insight
+- Operational modeling  
   - Refine provider utilization by incorporating clinic capacity or scheduling data  
   - Build time-based and slot-based utilization metrics at the clinic level  
-- **Patient retention analytics**  
+- Patient retention analytics  
   - Correlate survey satisfaction scores with appointment completion and attrition  
   - Identify patient segments at risk of dropping out based on demographics or payer type  
-- **Metric governance**  
-  - Formalize the semantic layer using dbt metrics or a framework like Cube / MetricFlow  
-  - Document and expose consistent metric definitions for BI and LLM-driven exploration  
-- **Enablement**  
-  - Create Looker or Looker Studio dashboards showing:  
+- Metric governance  
+  - Document and expose consistent metric definitions  
+- Dashboarding
+	- Use a better dashboarding tool with more flexibility 
     - Clinic performance over time  
     - Provider utilization and appointment mix  
     - Appointment funnel and completion trends  
 
+## Examples of more data to be collected: 
+- Capacity for each clinic - how many visits can a clinic fit in a day, how many primary providers can work there
+- Capacity for providers
+- Appointments event collection - record the time, method(phone or web), reason etc of every appointment event. can help understand how to improve appointment completion rate and utilization rate 
+
+## What to do to scale:
+- Add ci/cd functionality: precommit hooks, pr checks, automatic deployment on merge 
+- Create a snapshot of snowflake production environment as the development database for developers
+
+s
 ---
-
-
-this repo contains the dbt for this onsite assignment
-
-working assumptions: 
-i originally assumed that visits would have all of the locations. but i changed that assumption to that providers would have all the clinic locations 
-
-steps: 
-built staging models and tests on primary keys, accepted values, relationships. discovered the following about the data in addition to the ones listed - 
-Data quality issues discovered or previous noted in the project. normalized: 
-- clinic name inconsistencies clean up using macro 
-- P0124 was loaded twice in patients, resolved with select distinct in staging layer
-
-Data quality issues / questions, not handled:
-- in providers - missing provider_ids 24-30
-- 161 completed appointments does not have associated visits, need to understand why and think about what metrics we care about surrounding appointments
-- 2 clinics aren't being utilized at all or no data from them?
-
-Definitions
-- rescheduled appointments is a very interesting data point, and can potentially provide a lot of value if we had more data collected. if an appointment was cancelled or rescheduled, when was it rescheduled/cancelled relative to the appointment time? were we later able to fill that same appointment time? this could contribute to poorer clinic utilization. Could recommend a cancellation fee if within a period of time, or recommend reminder messages. For now, i'd keep rescheduled as its own definition until more data point can be gathered to break appointments out into different models serving metrics that could help increase appointment completion rate. 
-
-goals - 
-- get people into see doctors regularly. once a quarter could be gold standard. 
-- clinics and doctors are well utilized to be able to serve 5 doctors a day 
-
-Some examples of more data that could be gathered: 
-- capacity for each clinic - how many visits can a clinic fit in a day, how many primary providers can work there 
-- appointments data points - are appointments rescheduled/cancelled through phone or web? record the time of every appointment event, reason. can understand how to improve appointment completion rate and utilization rate 
-
-
-
-if i had more time:
-- have a more sophisticated understanding of appointments/visits and how they affect topline clinic performance
-- patient attrition evaluation, how can we retain patients and have them come for check ups quarterly. do survey scores correlate with their visit rate/appointment completion rate, would a negative survey score (less than 3) affect their next likelihood of getting to their next appointment. do other attributes affect patient attrition - how they pay, age range, location, etc.. 
-- provider analysis. survey results by provider, evaluate performance. what could contribute to survey scores for providers? are certain specialties more in demand than others, do specialities have more or less cancelled/no show appointments?
-
 
 
 Andhealth onsite 
@@ -125,7 +101,7 @@ Notes for candidates:
 - Telehealth visits are associated with a clinic for attribution; a small subset use 'Telehealth Hub' as location.
 
 
-
+---
 
 
 📘 AndHealth Analytics Engineer Project
@@ -212,13 +188,3 @@ Tone & Expectations
 This isn’t about perfection — it’s about how you think.We value clarity over complexity and curiosity over polish.
 If something’s unclear, tell us how you’d clarify it.If scope was too large given the allotted time, tell us why and how you narrowed it.If something’s messy, explain how you’d fix it.If you have a better idea, show us.
 We’re excited to learn from you!
-
-
-
-
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
