@@ -9,6 +9,7 @@ select distinct
     clinic_name,
     null as region,
     null as timezone,
-    null as first_open_date
+    null as first_open_date,
+    null as capacity_per_day
 from all_names
 

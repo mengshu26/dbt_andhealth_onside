@@ -1,0 +1,155 @@
+version: 2
+
+models:
+  - name: int_clinic_base
+    description: Base intermediate model aggregating all clinic names from various sources
+    columns:
+      - name: clinic_name
+        description: Standardized clinic name
+        tests:
+          - not_null
+      - name: region
+        description: Clinic region (currently null)
+      - name: timezone
+        description: Clinic timezone (currently null)
+      - name: first_open_date
+        description: Date clinic first opened (currently null)
+
+  - name: int_clinic_appointments_daily
+    description: Daily aggregation of appointments by clinic, including status breakdowns
+    columns:
+      - name: clinic_name
+        description: Standardized clinic name
+        tests:
+          - not_null
+      - name: scheduled_at
+        description: Appointment scheduled timestamp
+        tests:
+          - not_null
+      - name: total_appointments
+        description: Total number of appointments for this clinic on this date
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: cancelled
+        description: Count of cancelled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: rescheduled
+        description: Count of rescheduled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: no_show
+        description: Count of no-show appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: completed
+        description: Count of completed appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: int_clinic_visits_daily
+    description: Daily aggregation of visits by clinic, including telehealth breakdown
+    columns:
+      - name: clinic_name
+        description: Standardized clinic name
+        tests:
+          - not_null
+      - name: visit_date
+        description: Date of the visits
+        tests:
+          - not_null
+      - name: total_visits
+        description: Total number of visits for this clinic on this date
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: telehealth_visits
+        description: Count of telehealth visits
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: int_clinic_survey_daily
+    description: Daily aggregation of survey responses by clinic, including satisfaction score distribution
+    columns:
+      - name: clinic_name
+        description: Standardized clinic name
+        tests:
+          - not_null
+      - name: visit_date
+        description: Date of the survey responses (based on visit date)
+        tests:
+          - not_null
+      - name: survey_count
+        description: Total number of survey responses for this clinic on this date
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_sum
+        description: Sum of all satisfaction scores
+        tests:
+          - not_null
+      - name: avg_satisfaction_score
+        description: Average satisfaction score (1-5 scale)
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 5
+              inclusive: true
+      - name: survey_score_1_count
+        description: Count of surveys with satisfaction score = 1
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_2_count
+        description: Count of surveys with satisfaction score = 2
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_3_count
+        description: Count of surveys with satisfaction score = 3
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_4_count
+        description: Count of surveys with satisfaction score = 4
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_5_count
+        description: Count of surveys with satisfaction score = 5
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+

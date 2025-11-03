@@ -28,7 +28,7 @@ survey_q as (
     s.clinic_name,
     d.year,
     d.quarter,
-    round(sum(s.survey_score_sum) / nullif(sum(s.survey_count), 0), 2) as avg_survey_score,
+    {{ avg_survey_score('s.survey_score_sum', 's.survey_count') }} as avg_survey_score,
     sum(s.survey_count) as survey_count,
     sum(s.survey_score_sum) as survey_score_sum,
     sum(s.survey_score_1_count) as survey_score_1_count,

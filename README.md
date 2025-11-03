@@ -47,13 +47,13 @@
 		- etc
   - Then work with analysts to define key metrics and tables that can help evaluate performance and give insight
 - Operational modeling  
-  - Refine provider utilization by incorporating clinic capacity or scheduling data  
+  - Build provider utilization by incorporating clinic/provider capacity or scheduling data  
   - Build time-based and slot-based utilization metrics at the clinic level  
 - Patient retention analytics  
   - Correlate survey satisfaction scores with appointment completion and attrition  
   - Identify patient segments at risk of dropping out based on demographics or payer type  
 - Metric governance  
-  - Document and expose consistent metric definitions  
+  - Document and expose consistent metric definitions 
 - Dashboarding
 	- Use a better dashboarding tool with more flexibility 
     - Clinic performance over time  
@@ -68,6 +68,7 @@
 ## What to do to scale:
 - Add ci/cd functionality: precommit hooks, pr checks, automatic deployment on merge 
 - Create a snapshot of snowflake production environment as the development database for developers
+- Testing and monitoring framework
 
 
 ---

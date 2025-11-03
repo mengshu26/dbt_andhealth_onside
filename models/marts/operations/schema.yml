@@ -1,0 +1,461 @@
+version: 2
+
+models:
+  - name: dim_clinic
+    description: Dimension table for clinic locations
+    columns:
+      - name: clinic_name
+        description: Unique clinic name
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_patients
+    description: Patient dimension table with demographic information and visit history metrics
+    columns:
+      - name: patient_id
+        description: Unique identifier for the patient
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_patients')
+              field: patient_id
+      - name: age_group
+        description: Patient age group classification
+      - name: payer_type
+        description: Insurance payer type
+      - name: gender
+        description: Patient gender
+      - name: city
+        description: Patient city
+      - name: state
+        description: Patient state
+      - name: first_visit_date
+        description: Date of patient's first visit
+      - name: last_visit_date
+        description: Date of patient's most recent visit
+      - name: num_visits_last_3_months
+        description: Number of visits in the last 3 months
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: is_active_patient
+        description: Boolean flag indicating if patient had a visit in the last 3 months
+        tests:
+          - not_null
+      - name: visits_q1
+        description: Number of visits in Q1 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q2
+        description: Number of visits in Q2 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q3
+        description: Number of visits in Q3 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q4
+        description: Number of visits in Q4 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: dim_providers
+    description: Provider dimension table with provider information and utilization metrics
+    columns:
+      - name: provider_id
+        description: Unique identifier for the provider
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: provider_name
+        description: Full name of the provider
+        tests:
+          - not_null
+      - name: provider_type
+        description: Provider specialty/type
+      - name: home_clinic
+        description: Provider's home clinic location
+        tests:
+          - not_null
+      - name: first_visit_date
+        description: Date of provider's first visit
+      - name: last_visit_date
+        description: Date of provider's most recent visit
+      - name: num_visits_last_3_months
+        description: Number of visits in the last 3 months
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: is_active_provider
+        description: Boolean flag indicating if provider had a visit in the last 3 months
+        tests:
+          - not_null
+      - name: visits_q1
+        description: Number of visits in Q1 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q2
+        description: Number of visits in Q2 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q3
+        description: Number of visits in Q3 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: visits_q4
+        description: Number of visits in Q4 of current year
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: fact_visits
+    description: Fact table for patient visits with primary and secondary provider information
+    columns:
+      - name: visit_id
+        description: Unique identifier for the visit
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('stg_visits')
+              field: visit_id
+      - name: appointment_id
+        description: Foreign key to appointments table
+        tests:
+          - relationships:
+              to: ref('stg_appointments')
+              field: appointment_id
+      - name: patient_id
+        description: Foreign key to patients table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_patients')
+              field: patient_id
+      - name: visit_date
+        description: Date of the visit
+        tests:
+          - not_null
+      - name: billed_amount
+        description: Amount billed for the visit
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: clinic_location
+        description: Clinic location for visit
+        tests:
+          - not_null
+      - name: is_first_visit_for_patient
+        description: Boolean flag indicating if this is patient's first visit
+        tests:
+          - not_null
+      - name: visit_duration_minutes
+        description: Duration of visit in minutes
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: modality
+        description: Visit modality (in-person, telehealth, etc.)
+      - name: primary_provider_id
+        description: Provider ID of the primary provider for this visit
+        tests:
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: primary_provider_name
+        description: Name of the primary provider
+      - name: primary_provider_type
+        description: Specialty/type of the primary provider
+      - name: primary_provider_home_clinic
+        description: Home clinic of the primary provider
+      - name: secondary_provider_id
+        description: Provider ID of the secondary provider for this visit (if applicable)
+        tests:
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: secondary_provider_name
+        description: Name of the secondary provider (if applicable)
+      - name: secondary_provider_type
+        description: Specialty/type of the secondary provider (if applicable)
+      - name: secondary_provider_home_clinic
+        description: Home clinic of the secondary provider (if applicable)
+
+  - name: fact_provider_utilization
+    description: Daily fact table tracking provider utilization metrics by clinic
+    columns:
+      - name: provider_id
+        description: Foreign key to providers table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: date
+        description: Date for the utilization metrics
+        tests:
+          - not_null
+      - name: clinic_name
+        description: Clinic name
+        tests:
+          - not_null
+      - name: num_appointments
+        description: Total number of appointments scheduled
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_appointments_completed
+        description: Number of completed appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_appointments_no_show
+        description: Number of no-show appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_appointments_cancelled
+        description: Number of cancelled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_appointments_rescheduled
+        description: Number of rescheduled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_unique_patients_scheduled
+        description: Count of distinct patients scheduled
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_visits
+        description: Total number of visits
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: num_unique_patients_seen
+        description: Count of distinct patients seen
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+
+  - name: fact_patient_journey
+    description: Fact table tracking patient journey events (appointments, visits, surveys) with sequencing
+    columns:
+      - name: patient_id
+        description: Foreign key to patients table
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_patients')
+              field: patient_id
+      - name: event_type
+        description: Type of event (appointment, visit, survey)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['appointment', 'visit', 'survey']
+      - name: event_id
+        description: ID of the event (appointment_id, visit_id, or survey visit_id)
+        tests:
+          - not_null
+      - name: event_date
+        description: Date of the event (null for surveys)
+      - name: clinic_name
+        description: Clinic name for the event (null for surveys)
+      - name: provider_id
+        description: Provider ID for the event (null for surveys)
+        tests:
+          - relationships:
+              to: ref('stg_providers')
+              field: provider_id
+      - name: event_status
+        description: Status of the event (appointment status, null for visits/surveys)
+      - name: sequence_number
+        description: Sequential number of the event for this patient
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 1
+              inclusive: true
+      - name: prior_event_date
+        description: Date of the previous event for this patient
+      - name: days_since_prior_event
+        description: Number of days between this event and the prior event
+
+  - name: fact_clinic_metrics
+    description: Quarterly aggregated metrics by clinic including visits, appointments, and survey scores
+    columns:
+      - name: clinic_name
+        description: Standardized clinic name
+        tests:
+          - not_null
+      - name: year
+        description: Calendar year
+        tests:
+          - not_null
+      - name: quarter
+        description: Calendar quarter (Q1, Q2, Q3, Q4)
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Q1', 'Q2', 'Q3', 'Q4']
+      - name: total_visits
+        description: Total number of visits for this clinic in this quarter
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: telehealth_visits
+        description: Number of telehealth visits
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: total_appointments
+        description: Total number of appointments scheduled
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: cancelled
+        description: Number of cancelled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: rescheduled
+        description: Number of rescheduled appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: no_show
+        description: Number of no-show appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: completed
+        description: Number of completed appointments
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: avg_survey_score
+        description: Average patient satisfaction score (1-5 scale)
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 5
+              inclusive: true
+      - name: survey_count
+        description: Total number of survey responses
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_sum
+        description: Sum of all satisfaction scores
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_1_count
+        description: Count of surveys with satisfaction score = 1
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_2_count
+        description: Count of surveys with satisfaction score = 2
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_3_count
+        description: Count of surveys with satisfaction score = 3
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_4_count
+        description: Count of surveys with satisfaction score = 4
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+      - name: survey_score_5_count
+        description: Count of surveys with satisfaction score = 5
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              inclusive: true
+

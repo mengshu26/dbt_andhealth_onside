@@ -7,7 +7,7 @@ with source as (
 
 renamed as (
 
-    select
+    select distinct 
         cast(patient_id as varchar) as patient_id,
         cast(age_group as varchar) as age_group,
         cast(payer_type as varchar) as payer_type,
