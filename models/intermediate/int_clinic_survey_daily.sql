@@ -2,7 +2,7 @@ with surveys as (
   select
     v.clinic_location as clinic_name,
     v.visit_date,
-    try_to_number(s.satisfaction_score) as satisfaction_score,
+    cast(s.satisfaction_score as integer) as satisfaction_score,
     s.visit_id
   from {{ ref('stg_survey') }} s
   join {{ ref('stg_visits') }} v on s.visit_id = v.visit_id

@@ -9,12 +9,12 @@ with visit_dates as (
     group by patient_id
 ),
 
-visits_last_3_months as (
+visits_last_6_months as (
     select
         patient_id,
-        count(*) as num_visits_last_3_months
+        count(*) as num_visits_last_6_months
     from {{ ref('stg_visits') }}
-    where visit_date >= dateadd('month', -3, current_date())
+    where visit_date >= dateadd('month', -6, current_date())
     group by patient_id
 ),
 
@@ -39,6 +39,40 @@ quarterly_visit_pivot as (
         coalesce(max(case when quarter = 'Q4' then visit_count end), 0) as visits_q4
     from quarterly_visits
     group by patient_id
+),
+
+consecutive_no_shows as (
+    select
+        patient_id,
+        case 
+            when count(*) = 2 
+                and min(upper(status)) = 'NO_SHOW' 
+                and max(upper(status)) = 'NO_SHOW'
+            then 1
+            else 0
+        end as has_consecutive_no_shows
+    from (
+        select
+            patient_id,
+            scheduled_date,
+            upper(status) as status,
+            row_number() over (
+                partition by patient_id 
+                order by scheduled_date desc
+            ) as appointment_rank
+        from {{ ref('stg_appointments') }}
+    ) ranked_appointments
+    where appointment_rank <= 2
+    group by patient_id
+    having count(*) = 2
+),
+
+last_event_survey_low_score as (
+    select
+        patient_id,
+        max(case when is_last_event_low_score_survey then 1 else 0 end) as has_low_score_last_survey
+    from {{ ref('int_patient_journey') }}
+    group by patient_id
 )
 
 select
@@ -50,11 +84,21 @@ select
     p.state,
     vd.first_visit_date,
     vd.last_visit_date,
-    coalesce(v3m.num_visits_last_3_months, 0) as num_visits_last_3_months,
+    coalesce(v6m.num_visits_last_6_months, 0) as num_visits_last_6_months,
     case 
-        when coalesce(v3m.num_visits_last_3_months, 0) > 0 then true 
+        when coalesce(v6m.num_visits_last_6_months, 0) = 0 then true 
         else false 
-    end as is_active_patient,
+    end as is_inactive_patient,
+    case 
+        when coalesce(v6m.num_visits_last_6_months, 0) = 0 then null
+        when coalesce(v6m.num_visits_last_6_months, 0) > 0 
+            and (
+                coalesce(cns.has_consecutive_no_shows, 0) = 1
+                or coalesce(ls.has_low_score_last_survey, 0) = 1
+            )
+        then true 
+        else false 
+    end as at_risk_of_attrition_patient,
     coalesce(qvp.visits_q1, 0) as visits_q1,
     coalesce(qvp.visits_q2, 0) as visits_q2,
     coalesce(qvp.visits_q3, 0) as visits_q3,
@@ -62,7 +106,11 @@ select
 from {{ ref('stg_patients') }} p
 left join visit_dates vd
     on p.patient_id = vd.patient_id
-left join visits_last_3_months v3m
-    on p.patient_id = v3m.patient_id
+left join visits_last_6_months v6m
+    on p.patient_id = v6m.patient_id
 left join quarterly_visit_pivot qvp
     on p.patient_id = qvp.patient_id
+left join consecutive_no_shows cns
+    on p.patient_id = cns.patient_id
+left join last_event_survey_low_score ls
+    on p.patient_id = ls.patient_id

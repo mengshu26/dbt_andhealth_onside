@@ -16,6 +16,9 @@
   - Intermediate - business logic and joins  
   - Marts → aggregated, dashboard or stakeholder-ready tables and metrics  
 
+proposed definition of what attrition is and what attrition risk be 
+consistent no shows 
+6 months 
 
 
 ## The semantic layer

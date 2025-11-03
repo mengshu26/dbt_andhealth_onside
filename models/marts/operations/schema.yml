@@ -291,49 +291,7 @@ models:
               min_value: 0
               inclusive: true
 
-  - name: fact_patient_journey
-    description: Fact table tracking patient journey events (appointments, visits, surveys) with sequencing
-    columns:
-      - name: patient_id
-        description: Foreign key to patients table
-        tests:
-          - not_null
-          - relationships:
-              to: ref('stg_patients')
-              field: patient_id
-      - name: event_type
-        description: Type of event (appointment, visit, survey)
-        tests:
-          - not_null
-          - accepted_values:
-              values: ['appointment', 'visit', 'survey']
-      - name: event_id
-        description: ID of the event (appointment_id, visit_id, or survey visit_id)
-        tests:
-          - not_null
-      - name: event_date
-        description: Date of the event (null for surveys)
-      - name: clinic_name
-        description: Clinic name for the event (null for surveys)
-      - name: provider_id
-        description: Provider ID for the event (null for surveys)
-        tests:
-          - relationships:
-              to: ref('stg_providers')
-              field: provider_id
-      - name: event_status
-        description: Status of the event (appointment status, null for visits/surveys)
-      - name: sequence_number
-        description: Sequential number of the event for this patient
-        tests:
-          - not_null
-          - dbt_utils.accepted_range:
-              min_value: 1
-              inclusive: true
-      - name: prior_event_date
-        description: Date of the previous event for this patient
-      - name: days_since_prior_event
-        description: Number of days between this event and the prior event
+
 
   - name: fact_clinic_metrics
     description: Quarterly aggregated metrics by clinic including visits, appointments, and survey scores
