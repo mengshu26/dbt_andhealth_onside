@@ -69,11 +69,9 @@
 - Add ci/cd functionality: precommit hooks, pr checks, automatic deployment on merge 
 - Create a snapshot of snowflake production environment as the development database for developers
 
-s
+
 ---
 
-
-Andhealth onsite 
 
 AndHealth Analytics Engineer Project - Synthetic Dataset (v2)
 
